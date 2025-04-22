@@ -1,0 +1,289 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+spec:
+  template:
+    spec:
+      files:
+        - path: /etc/containerd/config.toml
+          content: |
+            version = 2
+            [plugins]
+              [plugins."io.containerd.grpc.v1.cri"]
+                sandbox_image = "docker-remote.registry.saas.cagip.group.gca/pause:3.2"
+              [plugins."io.containerd.grpc.v1.cri".registry]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
+                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."gcr.io"]
+                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
+                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."k8s.io"]
+                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
+                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
+                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
+                [plugins."io.containerd.grpc.v1.cri".registry.configs]
+                  [plugins."io.containerd.grpc.v1.cri".registry.configs."docker-remote.registry.saas.cagip.group.gca.tls"]
+                    insecure_skip_verify = true
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+ #           cloud-provider: external
+            provider-id: openstack:///'{{ instance_id }}'
+            node-labels: "topology.kubernetes.io/zone=dalembert-az"
+          name: '{{ local_hostname }}'
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: ${CLUSTER_NAME}
+  labels:
+    cni: calico
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 172.16.0.0/12 # CIDR block used by Cilium.
+    serviceDomain: cluster.local
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: ${CLUSTER_NAME}-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: OpenStackCluster
+    name: ${CLUSTER_NAME}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+spec:
+  clusterName: ${CLUSTER_NAME}
+  replicas: 2
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: ${CLUSTER_NAME}-md-0
+      clusterName: ${CLUSTER_NAME}
+      failureDomain: dalembert-az
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: OpenStackMachineTemplate
+        name: ${CLUSTER_NAME}-md-0
+      version: ${KUBERNETES_VERSION}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: ${CLUSTER_NAME}-control-plane
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      etcd:
+        external:
+          caFile: /etc/kubernetes/pki/etcd/ca.crt
+          certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
+          keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
+          endpoints:
+          - https://10.163.39.61:2379
+          - https://10.163.39.70:2379
+          - https://10.163.39.156:2379
+      imageRepository: docker-remote.registry.saas.cagip.group.gca
+      dns:
+        imageRepository: docker-remote.registry.saas.cagip.group.gca/coredns
+        imageTag: 1.9.3 # DNS image tag
+      apiServer:
+        extraArgs:
+           encryption-provider-config: /etc/kubernetes/pki/secrets.yaml 
+          #cloud-provider: external
+      controllerManager:
+        extraArgs:
+          #cloud-provider: external
+    files:
+      - path: /etc/containerd/config.toml
+        content: |
+          version = 2
+          [plugins]
+            [plugins."io.containerd.grpc.v1.cri"]
+              sandbox_image = "docker-remote.registry.saas.cagip.group.gca/pause:3.2"
+            [plugins."io.containerd.grpc.v1.cri".registry]
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."gcr.io"]
+                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."k8s.io"]
+                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
+                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
+                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
+              [plugins."io.containerd.grpc.v1.cri".registry.configs]
+                [plugins."io.containerd.grpc.v1.cri".registry.configs."docker-remote.registry.saas.cagip.group.gca.tls"]
+                  insecure_skip_verify = true
+      - path: /etc/kubernetes/pki/secrets.yaml
+        content: |
+          kind: EncryptionConfiguration
+          apiVersion: apiserver.config.k8s.io/v1
+          resources:
+            - resources:
+                - secrets
+              providers:
+                - aescbc:
+                    keys:
+                      - name: original-key
+                        secret: ${KUBERNETES_ENCRYPTION_SECRET}
+    preKubeadmCommands:
+      #- mv /run/kubeadm/kubeadm.yaml /tmp/ &&
+    ntp:
+      servers:
+        - 10.255.9.14
+        - 10.255.9.30
+        - 10.255.9.46
+      enabled: true
+    initConfiguration:
+      localAPIEndpoint:
+        advertiseAddress: '{{ ds.ec2_metadata.local_ipv4 }}'
+        bindPort: 6443
+      nodeRegistration:
+        kubeletExtraArgs:
+          #cloud-provider: external
+          provider-id: openstack:///'{{ instance_id }}'
+        name: '{{ local_hostname }}'
+    joinConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          #cloud-provider: external
+          provider-id: openstack:///'{{ instance_id }}'
+        name: '{{ local_hostname }}'
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: OpenStackMachineTemplate
+      name: ${CLUSTER_NAME}-control-plane
+  replicas: 3
+  version: ${KUBERNETES_VERSION}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OpenStackCluster
+metadata:
+  name: ${CLUSTER_NAME}
+spec:
+  identityRef:
+    cloudName: ${OPENSTACK_CLOUD}
+    name: ${CLUSTER_NAME}-cloud-config
+  apiServerLoadBalancer:
+    enabled: false
+  disableAPIServerFloatingIP: true
+  apiServerPort: 443
+  managedSecurityGroups:
+    allNodesSecurityGroupRules:
+    - description: Created by cluster-api-provider-openstack - SSH (admin)
+      direction: ingress
+      etherType: IPv4
+      name: SSH (Admin)
+      portRangeMax: 22
+      portRangeMin: 22
+      protocol: tcp
+      remoteIPPrefix: 0.0.0.0/0
+    - description: Created by cluster-api-provider-openstack - all Out
+      direction: egress
+      etherType: IPv4
+      name: ALL egress
+      protocol: tcp
+      remoteIPPrefix: 0.0.0.0/0
+    - description: Created by cluster-api-provider-openstack - PING (vip)
+      direction: ingress
+      etherType: IPv4
+      name: PING (vip)
+      protocol: ICMP
+      remoteIPPrefix: 0.0.0.0/0
+    - direction: ingress
+      etherType: IPv4
+      name: Merge Old group
+      description: "Allow all between old and new control plane and workers"
+      remoteGroupID: "fbe67b5e-9369-47f9-8834-5e2c8d79eb10"
+    - remoteManagedGroups:
+      - controlplane
+      - worker
+      direction: ingress
+      etherType: IPv4
+      name: BGP (Calico)
+      portRangeMin: 179
+      portRangeMax: 179
+      protocol: tcp
+      description: "Allow BGP between control plane and workers"
+    - remoteManagedGroups:
+      - controlplane
+      - worker
+      direction: ingress
+      etherType: IPv4
+      name: IP-in-IP (Calico)
+      protocol: "4"
+      description: "Allow IP-in-IP between control plane and workers"
+  # Configure it when you use a valid DNS
+  controlPlaneEndpoint:
+   host: api.devbench.managed.cagip.gca
+   port: 443
+  network:
+    id: ${OPENSTACK_NETWORK_ID}
+  subnets:
+  - id: ${OPENSTACK_SUBNET_ID}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OpenStackMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-control-plane
+spec:
+  template:
+    spec:
+      flavor: ${OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR}
+      image:
+        filter:
+          name: ${OPENSTACK_IMAGE_NAME}
+      ports:
+        - network:
+            id: ${OPENSTACK_NETWORK_ID}
+          fixedIPs:
+            - subnet:
+                id: ${OPENSTACK_SUBNET_ID}
+        - network:
+            id: ${OPENSTACK_ADM_NETWORK_ID}
+          fixedIPs:
+            - subnet:
+                id: ${OPENSTACK_ADM_SUBNET_ID}
+      sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OpenStackMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-0
+spec:
+  template:
+    spec:
+      flavor: ${OPENSTACK_NODE_MACHINE_FLAVOR}
+      image:
+        filter:
+          name: ${OPENSTACK_IMAGE_NAME}
+      rootVolume:
+        sizeGiB: 40
+        type: standard
+        availabilityZone:
+          name: dalembert-az
+      ports:
+        - network:
+            id: ${OPENSTACK_NETWORK_ID}
+          fixedIPs:
+            - subnet:
+                id: ${OPENSTACK_SUBNET_ID}
+        - network:
+            id: ${OPENSTACK_ADM_NETWORK_ID}
+          fixedIPs:
+            - subnet:
+                id: ${OPENSTACK_ADM_SUBNET_ID}
+      sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
+
