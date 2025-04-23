@@ -33,18 +33,6 @@ It is carried out in five main steps:
 The CAPI Controller should have acces to the api url of the cluster to manage. (https://api.mylegacy_cluster.kubeadm)
 
 
-### Extract secret and CA of your cluster.
-
-![](img/capi-secret.png)
-
-First, run the `prepare_secrets.sh` script on a control plane node, passing the name of the cluster you want to migrate as an argument. This name should match the `cluster_name` defined in CAPI.
-The script will generate a file named `${CLUSTER_NAME}-secret-bundle.yaml`.
-
-```
-./prepare_secrets.sh ${CLUSTER_NAME}
-```
-and get the file:  ${CLUSTER_NAME}-secret-bundle.yaml
-
 ### Prepare env vars for your cluster.
 
 **Manual step: secret cloud.yaml**
@@ -64,15 +52,35 @@ based on env_example file create vars file for your cluster and source it:
 source env_example
 ```
 
-## Migrate your cluster
 
+## 1 - Extract Secrets of your cluster.
 
-**Migrate cluster command:**
+![](img/capi-secret.png)
+
+First, run the [prepare_secrets.sh](https://github.com/jfpucheu/devops-notes/blob/main/src/capi/prepare_secrets.sh) script on a control plane node, passing the name of the cluster you want to migrate as an argument. This name should match the `cluster_name` defined in CAPI.
+You can find the script [Here](https://github.com/jfpucheu/devops-notes/blob/main/src/capi/prepare_secrets.sh).
+
+The script will generate a file named `${CLUSTER_NAME}-secret-bundle.yaml`.
+
 ```
-# import secret bundle
-kubectl apply -f ${CLUSTER_NAME}-secret-bundle.yaml
+./prepare_secrets.sh ${CLUSTER_NAME}
+```
 
-# Migrate  ${CLUSTER_NAME} cluster
+and get the file:  ${CLUSTER_NAME}-secret-bundle.yaml
+
+### Import the secret bundle into CAPI
+
+Apply your  `${CLUSTER_NAME}-secret-bundle.yaml` into you CAPI Controller Cluster:
+```
+kubectl apply -f ${CLUSTER_NAME}-secret-bundle.yaml
+```
+
+## 2 - Create the Cluster Crontrol-Plane and workers into CAPI
+
+![](img/capi-cp-migration.png)
+
+```
+# Ctrate capi  ${CLUSTER_NAME} cluster
 envsubst <  cluster-template-migration.yaml | kubectl apply -f
 ```
 

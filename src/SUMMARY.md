@@ -14,3 +14,5 @@
     - [Quick Start](capi/capi-quick-start.md)
     - [First Cluster](capi/first-cluster.md)
     - [Migrate Cluster to capi ](capi/migrate-cluster.md)
+
+- [Synology](synology/syno-notes.md)
