@@ -5,14 +5,19 @@
 # At this stage, the script has been developed specifically for the Cluster API Provider OpenStack (CAPO).
 # Feel free to share any suggestions or ideas for improvements or future developments.
 
-# Prerequisites: install yq
-# Linux
-# sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
-# sudo chmod +x /usr/local/bin/yq
+# Check if 'yq' is installed
+if ! command -v yq &> /dev/null; then
+    echo >&2 "Error: 'yq' is not installed. Please install it to continue.
 
-# macOS
-# brew install yq
+Installation instructions:
+  On Linux:
+    sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+    sudo chmod +x /usr/local/bin/yq
 
+  On macOS:
+    brew install yq"
+    exit 1
+fi
 
 # Check if an argument was passed
 if [ -z "$1" ]; then
@@ -37,12 +42,12 @@ echo "---" >>  ${CLUSTER_NAME}-secret-bundle.yaml
 
 if [ ! -f "/etc/kubernetes/pki/apiserver-etcd-client.crt" ]; then
 # Create etcd cert files if apiserver-etcd-client is not present in the clusters.
-    openssl genrsa -out apiserver-etcd-client.key 2048
-    openssl req -new -key apiserver-etcd-client.key -out apiserver-etcd-client.csr -subj "/CN=kube-apiserver-etcd-client"
-    openssl x509 -req -in apiserver-etcd-client.csr -CA /etc/kubernetes/pki/etcd/ca.crt -CAkey /etc/kubernetes/pki/etcd/ca.key -CAcreateserial -extensions v3_ext -out apiserver-etcd-client.crt -days 365 -sha256
+    openssl genrsa -out /etc/kubernetes/pki/apiserver-etcd-client.key 2048
+    openssl req -new -key /etc/kubernetes/pki/apiserver-etcd-client.key -out /etc/kubernetes/pki/apiserver-etcd-client.csr -subj "/CN=kube-apiserver-etcd-client"
+    openssl x509 -req -in /etc/kubernetes/pki/apiserver-etcd-client.csr -CA /etc/kubernetes/pki/etcd/ca.crt -CAkey /etc/kubernetes/pki/etcd/ca.key -CAcreateserial -extensions v3_ext -out /etc/kubernetes/pki/apiserver-etcd-client.crt -days 365 -sha256
 fi
 
-kubectl create secret tls ${CLUSTER_NAME}-apiserver-etcd-client --cert apiserver-etcd-client.crt --key apiserver-etcd-client.key --dry-run=client -o yaml >>  ${CLUSTER_NAME}-secret-bundle.yaml
+kubectl create secret tls ${CLUSTER_NAME}-apiserver-etcd-client --cert /etc/kubernetes/pki/apiserver-etcd-client.crt --key /etc/kubernetes/pki/apiserver-etcd-client.key --dry-run=client -o yaml >>  ${CLUSTER_NAME}-secret-bundle.yaml
 # I have to check because kubeadm seams to not want to manage the renew of this certificats ${CLUSTER_NAME}-apiserver-etcd-client
 echo "---" >>  ${CLUSTER_NAME}-secret-bundle.yaml
 
@@ -85,7 +90,7 @@ echo "---" >>  ${CLUSTER_NAME}-secret-bundle.yaml
 #    client-certificate-data: =
 #    client-key-data: 
 
-cp /root/config /tmp/config
+cp /etc/kubernetes/admin.conf /tmp/config
 
 yq eval ".clusters[0].name = \"$CLUSTER_NAME\"" -i /tmp/config
 yq eval ".contexts[0].context.cluster = \"$CLUSTER_NAME\"" -i /tmp/config
