@@ -15,4 +15,4 @@
     - [First Cluster](capi/first-cluster.md)
     - [Migrate Cluster to capi ](capi/migrate-cluster.md)
 
-- [Synology](synology/syno-notes.md)
+- [Other](other/synology.md)

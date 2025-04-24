@@ -9,28 +9,13 @@ spec:
         - path: /etc/containerd/config.toml
           content: |
             version = 2
-            [plugins]
-              [plugins."io.containerd.grpc.v1.cri"]
-                sandbox_image = "docker-remote.registry.saas.cagip.group.gca/pause:3.2"
-              [plugins."io.containerd.grpc.v1.cri".registry]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."gcr.io"]
-                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."k8s.io"]
-                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
-                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                [plugins."io.containerd.grpc.v1.cri".registry.configs]
-                  [plugins."io.containerd.grpc.v1.cri".registry.configs."docker-remote.registry.saas.cagip.group.gca.tls"]
-                    insecure_skip_verify = true
+#           #add you custom containerd config here            
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
  #           cloud-provider: external
             provider-id: openstack:///'{{ instance_id }}'
-            node-labels: "topology.kubernetes.io/zone=dalembert-az"
+            node-labels: "topology.kubernetes.io/zone=eu-west-1"
           name: '{{ local_hostname }}'
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -43,7 +28,7 @@ spec:
   clusterNetwork:
     pods:
       cidrBlocks:
-      - 172.16.0.0/12 # CIDR block used by Cilium.
+      - 172.16.0.0/12 # CIDR block used by Calico.
     serviceDomain: cluster.local
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -71,7 +56,7 @@ spec:
           kind: KubeadmConfigTemplate
           name: ${CLUSTER_NAME}-md-0
       clusterName: ${CLUSTER_NAME}
-      failureDomain: dalembert-az
+      failureDomain: eu-west-1
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OpenStackMachineTemplate
@@ -91,12 +76,10 @@ spec:
           certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
           keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
           endpoints:
-          - https://10.163.39.61:2379
-          - https://10.163.39.70:2379
-          - https://10.163.39.156:2379
-      imageRepository: docker-remote.registry.saas.cagip.group.gca
+          - https://${ETCD_NODE_01}:2379
+          - https://${ETCD_NODE_02}:2379
+          - https://${ETCD_NODE_03}:2379
       dns:
-        imageRepository: docker-remote.registry.saas.cagip.group.gca/coredns
         imageTag: 1.9.3 # DNS image tag
       apiServer:
         extraArgs:
@@ -109,23 +92,8 @@ spec:
       - path: /etc/containerd/config.toml
         content: |
           version = 2
-          [plugins]
-            [plugins."io.containerd.grpc.v1.cri"]
-              sandbox_image = "docker-remote.registry.saas.cagip.group.gca/pause:3.2"
-            [plugins."io.containerd.grpc.v1.cri".registry]
-              [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."gcr.io"]
-                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."k8s.io"]
-                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
-                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-              [plugins."io.containerd.grpc.v1.cri".registry.configs]
-                [plugins."io.containerd.grpc.v1.cri".registry.configs."docker-remote.registry.saas.cagip.group.gca.tls"]
-                  insecure_skip_verify = true
-      - path: /etc/kubernetes/pki/secrets.yaml
+#         #add you custom containerd config here 
+      - path: /etc/kubernetes/pki/secrets.yaml 
         content: |
           kind: EncryptionConfiguration
           apiVersion: apiserver.config.k8s.io/v1
@@ -138,12 +106,11 @@ spec:
                       - name: original-key
                         secret: ${KUBERNETES_ENCRYPTION_SECRET}
     preKubeadmCommands:
-      #- mv /run/kubeadm/kubeadm.yaml /tmp/ &&
     ntp:
       servers:
-        - 10.255.9.14
-        - 10.255.9.30
-        - 10.255.9.46
+        - 0.fr.pool.ntp.org
+        - 1.fr.pool.ntp.org
+        - 2.fr.pool.ntp.org
       enabled: true
     initConfiguration:
       localAPIEndpoint:
@@ -204,9 +171,9 @@ spec:
       remoteIPPrefix: 0.0.0.0/0
     - direction: ingress
       etherType: IPv4
-      name: Merge Old group
+      name: Allow old secutirygroup
       description: "Allow all between old and new control plane and workers"
-      remoteGroupID: "fbe67b5e-9369-47f9-8834-5e2c8d79eb10"
+      remoteGroupID: "old-secutity-group-id"
     - remoteManagedGroups:
       - controlplane
       - worker
@@ -227,7 +194,7 @@ spec:
       description: "Allow IP-in-IP between control plane and workers"
   # Configure it when you use a valid DNS
   controlPlaneEndpoint:
-   host: api.devbench.managed.cagip.gca
+   host: api.mydevcluster.com
    port: 443
   network:
     id: ${OPENSTACK_NETWORK_ID}
@@ -273,7 +240,7 @@ spec:
         sizeGiB: 40
         type: standard
         availabilityZone:
-          name: dalembert-az
+          name: eu-west-1
       ports:
         - network:
             id: ${OPENSTACK_NETWORK_ID}

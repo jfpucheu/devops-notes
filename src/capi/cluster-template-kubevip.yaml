@@ -10,27 +10,12 @@ spec:
           content: |
             version = 2
             [plugins]
-              [plugins."io.containerd.grpc.v1.cri"]
-                sandbox_image = "docker-remote.registry.saas.cagip.group.gca/pause:3.2"
-              [plugins."io.containerd.grpc.v1.cri".registry]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."gcr.io"]
-                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."k8s.io"]
-                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
-                    endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                [plugins."io.containerd.grpc.v1.cri".registry.configs]
-                  [plugins."io.containerd.grpc.v1.cri".registry.configs."docker-remote.registry.saas.cagip.group.gca.tls"]
-                    insecure_skip_verify = true
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
  #           cloud-provider: external
             provider-id: openstack:///'{{ instance_id }}'
-            node-labels: "topology.kubernetes.io/zone=dalembert-az"
+            node-labels: "topology.kubernetes.io/zone=eu-west-1"
           name: '{{ local_hostname }}'
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -43,7 +28,7 @@ spec:
   clusterNetwork:
     pods:
       cidrBlocks:
-      - 172.16.0.0/12 # CIDR block used by Cilium.
+      - 172.16.0.0/12 # CIDR block used by calico
     serviceDomain: cluster.local
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -71,7 +56,7 @@ spec:
           kind: KubeadmConfigTemplate
           name: ${CLUSTER_NAME}-md-0
       clusterName: ${CLUSTER_NAME}
-      failureDomain: dalembert-az
+      failureDomain: eu-west-1
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OpenStackMachineTemplate
@@ -85,9 +70,7 @@ metadata:
 spec:
   kubeadmConfigSpec:
     clusterConfiguration:
-      imageRepository: docker-remote.registry.saas.cagip.group.gca
       dns:
-        imageRepository: docker-remote.registry.saas.cagip.group.gca/coredns
         imageTag: 1.9.3 # DNS image tag
       apiServer:
         extraArgs:
@@ -99,22 +82,7 @@ spec:
       - path: /etc/containerd/config.toml
         content: |
           version = 2
-          [plugins]
-            [plugins."io.containerd.grpc.v1.cri"]
-              sandbox_image = "docker-remote.registry.saas.cagip.group.gca/pause:3.2"
-            [plugins."io.containerd.grpc.v1.cri".registry]
-              [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."gcr.io"]
-                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."k8s.io"]
-                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-                [plugins."io.containerd.grpc.v1.cri".registry.mirrors."ghcr.io"]
-                  endpoint = ["https://docker-remote.registry.saas.cagip.group.gca"]
-              [plugins."io.containerd.grpc.v1.cri".registry.configs]
-                [plugins."io.containerd.grpc.v1.cri".registry.configs."docker-remote.registry.saas.cagip.group.gca.tls"]
-                  insecure_skip_verify = true
+#         #add you custom containerd config here 
       - path: /etc/kubernetes/manifests/kube-vip.yaml
         content: |
           apiVersion: v1
@@ -177,15 +145,14 @@ spec:
                 path: /etc/kubernetes/super-admin.conf
               name: kubeconfig
           status: {}
-    preKubeadmCommands:
-      #- ping -c 3 ${CLUSTER_API_IP} > /dev/null 2>&1 || sudo ip address add ${CLUSTER_API_IP}/32 dev ens3
     postKubeadmCommands:
       - "sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml"
+      # https://github.com/kube-vip/kube-vip/issues/684
     ntp:
       servers:
-        - 10.255.9.14
-        - 10.255.9.30
-        - 10.255.9.46
+        - 0.fr.pool.ntp.org
+        - 1.fr.pool.ntp.org
+        - 2.fr.pool.ntp.org
       enabled: true
     initConfiguration:
       localAPIEndpoint:
@@ -307,7 +274,7 @@ spec:
         sizeGiB: 40
         type: standard
         availabilityZone:
-          name: dalembert-az
+          name: eu-west-1
       ports:
         - network:
             id: ${OPENSTACK_NETWORK_ID}
