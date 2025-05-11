@@ -119,6 +119,8 @@ Apply your  `${CLUSTER_NAME}-secret-bundle.yaml` into you CAPI Controller Cluste
 kubectl apply -f ${CLUSTER_NAME}-secret-bundle.yaml
 ```
 
+Now capi will detecte that a CA and secrets are already exxisting and will not generate a new one.
+
 ## 4 - Create the CAPI control-plane and CAPI worker nodes
 
 ![](img/capi-cp-migration.png)
@@ -131,12 +133,30 @@ envsubst <  cluster-template-migration.yaml | kubectl apply -f
 Since the etcd database is shared between the old and new cluster, and the PKI secrets (such as TLS certificates and private keys) are identical, creating this new Kubernetes cluster will actually result in the addition of new control plane and CAPI worker nodes to the existing cluster, rather than forming a separate cluster.
 
 **Get your cluster state:**
-```
-# import secret bundle
-kubectl apply -f ${CLUSTER_NAME}-secret-bundle.yaml -n $NAMESPACE
 
+You will now see both your old control plane and worker nodes, as well as the new ones, in your cluster using `kubectl get nodes`.
+
+![](img/capi-worker-migration.png)
+
+In your CAPI cluster, running the clusterctl command will show only the new nodes that are managed by CAPI:
+
+```
 # Migrate  ${CLUSTER_NAME} cluster
-envsubst <  cluster-template-migration.yaml | kubectl apply -n $NAMESPACE -f
+clusterctl get cluster ${CLUSTER_NAME}
 ```
 
 ## 5 - Remove the old cluster nodes
+
+Make sure to update your load balancer (HAProxy or MetalLB) to include the new control plane nodes and remove the old ones.
+
+![](img/capi-migrated.png)
+
+Delete old nodes using:
+
+```
+# Delete old nodes
+kubectl delete old-node 
+```
+
+Don’t forget to do the same for the old control plane nodes: stop containerd and kubelet to ensure that static pods are no longer running."
+"And that’s it! You can now enjoy managing your cluster with CAPI 😊.
