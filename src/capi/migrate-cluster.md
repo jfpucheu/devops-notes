@@ -141,8 +141,23 @@ You will now see both your old control plane and worker nodes, as well as the ne
 In your CAPI cluster, running the clusterctl command will show only the new nodes that are managed by CAPI:
 
 ```
-# Migrate  ${CLUSTER_NAME} cluster
+# Get  ${CLUSTER_NAME} cluster
 clusterctl get cluster ${CLUSTER_NAME}
+
+NAME                                                    READY  SEVERITY  REASON  SINCE  MESSAGE
+Cluster/dev                                             True                     22h
+├─ClusterInfrastructure - OpenStackCluster/dev
+├─ControlPlane - KubeadmControlPlane/dev-control-plane  True                     22h
+│ └─3 Machines...                                       True                     22h    See dev-control-plane-2xjv4, dev-control-plane-lrt8m, ...
+└─Workers
+  ├─MachineDeployment/dev-az1                           True                     22h
+  │ └─Machine/dev-az1-z6zr4-9dldr                       True                     22h
+  ├─MachineDeployment/dev-az2                           True                     22h
+  │ └─Machine/dev-az2-nx55k-s265c                       True                     22h
+  └─MachineDeployment/dev-az3                           True                     22h
+    └─Machine/dev-az3-95fng-hsqfv                       True                     22h
+
+
 ```
 
 ## 5 - Remove the old cluster nodes
