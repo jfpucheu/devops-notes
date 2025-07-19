@@ -4,6 +4,9 @@
 
 **Author's note**: This is a practical guide for Kubernetes operators and administrators looking to improve cluster resilience and performance by fine-tuning `kubelet` parameters. The focus is on preventing node crashes and optimizing resource usage, especially for clusters running in production environments.
 
+<p align="center" width="100%">
+<img src="img/node-capacity.png" width="400">
+</p>
 
 ## 🚨 Why Tuning Matters
 
