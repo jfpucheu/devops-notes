@@ -8,6 +8,7 @@
 - [Kubernetes](kubernetes/README.md)
     - [Etcd](kubernetes/etcd.md)
     - [Tuning](kubernetes/kube-tuning.md)
+    - [Kube-apiserver goaway parameter](kubernetes/goaway-chance-kubernetes.md)
     - [Debug](kubernetes/debug.md)
 
 - [Cluster-Api](capi/README.md)
