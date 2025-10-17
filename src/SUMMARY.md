@@ -9,6 +9,7 @@
     - [Etcd](kubernetes/etcd.md)
     - [Tuning](kubernetes/kube-tuning.md)
     - [Kube-apiserver goaway parameter](kubernetes/goaway-chance-kubernetes.md)
+    - [Essential Kubectl Commands](kubernetes/kubectl_commands.md)
     - [Debug](kubernetes/debug.md)
 
 - [Cluster-Api](capi/README.md)
@@ -17,4 +18,6 @@
     - [Migrate Cluster to capi ](capi/migrate-cluster.md)
     - [ExternalSecret PushSecret](capi/pushsecret.md)
 
-- [Other](other/synology.md)
+- [Other](other/README.md)
+    - [Benchmark Tools](other/bench.md)
+    - [Synology](other/synology.md)
