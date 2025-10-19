@@ -19,5 +19,7 @@
     - [ExternalSecret PushSecret](capi/pushsecret.md)
 
 - [Other](other/README.md)
+    - [Essential DevOps Commands](other/devops_commands.md)
+    - [Essential Git Commands](other/git_commands.md)
     - [Benchmark Tools](other/bench.md)
     - [Synology](other/synology.md)
