@@ -17,6 +17,7 @@
     - [First Cluster](capi/first-cluster.md)
     - [Migrate Cluster to capi ](capi/migrate-cluster.md)
     - [ExternalSecret PushSecret](capi/pushsecret.md)
+    - [Restart from Etcd Backup](capi/etcd-restore.md)
 
 - [Other](other/README.md)
     - [Essential DevOps Commands](other/devops_commands.md)
