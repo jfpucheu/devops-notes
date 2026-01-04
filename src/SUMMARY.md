@@ -16,6 +16,7 @@
     - [Quick Start](capi/capi-quick-start.md)
     - [First Cluster](capi/first-cluster.md)
     - [Migrate Cluster to capi ](capi/migrate-cluster.md)
+    - [Migrate to capi with etcd ](capi/capi-migration-etcd.md)
     - [ExternalSecret PushSecret](capi/pushsecret.md)
     - [Restart from Etcd Backup](capi/etcd-restore.md)
 
