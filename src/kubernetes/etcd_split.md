@@ -1,6 +1,10 @@
 # Split your events (or other keys) into separate etcd clusters
 (Stop Letting Kubernetes Events Kill Your etcd — Here's the Fix)
 
+<p align="center" width="100%">
+<img src="img/etcd_split.png" width="300">
+</p>
+
 In large Kubernetes clusters, **events** can quickly become a problem. While they are useful for debugging and observability, they generate a very high volume of writes to etcd, which can **severely degrade the performance** of the main etcd cluster and therefore impact the entire Kubernetes API.
 
 ---
