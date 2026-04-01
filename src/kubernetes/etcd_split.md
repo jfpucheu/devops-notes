@@ -1,24 +1,24 @@
 # Split your events (or other keys) into separate etcd clusters
 
-Dans les gros clusters Kubernetes, les **events** peuvent rapidement devenir un problème. Bien qu'ils soient utiles pour le debugging et l'observabilité, ils génèrent un volume très important d'écritures dans etcd, ce qui peut **fortement dégrader les performances** du cluster etcd principal et donc impacter toute l'API Kubernetes.
+In large Kubernetes clusters, **events** can quickly become a problem. While they are useful for debugging and observability, they generate a very high volume of writes to etcd, which can **severely degrade the performance** of the main etcd cluster and therefore impact the entire Kubernetes API.
 
 ---
 
-## Problème
+## Problem
 
-Dans Kubernetes, les events sont stockés dans etcd sous le préfixe `/registry/events`.
-Dans les environnements à forte activité (beaucoup de pods, de déploiements, de controllers…), ce préfixe devient très sollicité :
+In Kubernetes, events are stored in etcd under the prefix `/registry/events`.
+In high-activity environments (many pods, deployments, controllers…), this prefix becomes heavily used:
 
-- Écriture massive et continue
-- Forte rotation des données (TTL court par défaut : 1h)
-- Pression sur le stockage et le CPU etcd
-- Compaction et defrag etcd plus fréquents
+- Massive and continuous writes
+- High data turnover (short TTL by default: 1h)
+- Pressure on etcd storage and CPU
+- More frequent etcd compaction and defragmentation
 
 ---
 
-## Solution : externaliser certaines clés vers un etcd dédié
+## Solution: offload certain keys to a dedicated etcd
 
-Kubernetes permet de **rediriger certaines clés vers un cluster etcd distinct** via le flag du kube-apiserver :
+Kubernetes allows **redirecting certain keys to a separate etcd cluster** via the kube-apiserver flag:
 
 ```
 --etcd-servers-overrides
@@ -30,78 +30,78 @@ Kubernetes permet de **rediriger certaines clés vers un cluster etcd distinct**
 --etcd-servers-overrides=<prefix>#<server1>,<server2>,<server3>
 ```
 
-> Les serveurs d'un même groupe sont séparés par des **virgules** (`,`).
-> Plusieurs overrides sont séparés par des **virgules** (`,`) également.
+> Servers within the same group are separated by **commas** (`,`).
+> Multiple overrides are also separated by **semicolons** (`;`).
 
-### Exemple de configuration kube-apiserver
+### kube-apiserver configuration example
 
 ```yaml
-# etcd principal
+# Main etcd
 - --etcd-servers=https://10.0.0.11:2379,https://10.0.0.12:2379,https://10.0.0.13:2379
 - --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
 - --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt
 - --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key
 
-# Externalisation des events vers un cluster etcd dédié
+# Offloading events to a dedicated etcd cluster
 - --etcd-servers-overrides=/events#https://10.0.1.20:2379,https://10.0.1.21:2379,https://10.0.1.22:2379
 ```
 
 ---
 
-## Avantages
+## Benefits
 
-- Réduction de la charge sur l'etcd principal
-- Meilleures performances globales de l'API server
-- Isolation des données très volatiles
-- Scalabilité indépendante des deux clusters
-- Cycles de compaction/defrag indépendants
-
----
-
-## Limites et contraintes
-
-### Authentification partagée
-
-Le kube-apiserver utilise les **mêmes certificats TLS client** (`etcd-certfile` / `etcd-keyfile`) pour tous les clusters etcd, y compris les overrides. Il n'est pas possible de spécifier des certificats différents par cluster.
-
-En pratique : les deux clusters etcd doivent être signés par la **même CA** et accepter le même certificat client du kube-apiserver.
-
-### Disponibilité
-
-Si l'etcd dédié aux events devient indisponible :
-
-- Le kube-apiserver continue de tenter d'écrire/lire les events
-- Les timeouts et retries impactent les performances globales
-- L'etcd principal reste opérationnel, mais l'API server est dégradé
+- Reduced load on the main etcd
+- Better overall API server performance
+- Isolation of highly volatile data
+- Independent scalability of both clusters
+- Independent compaction/defragmentation cycles
 
 ---
 
-## Bonnes pratiques
+## Limitations and constraints
 
-- Déployer l'etcd events en haute disponibilité (minimum 3 nœuds)
-- Monitorer séparément les deux clusters etcd
-- Ajuster la rétention des events : `--event-ttl=1h` (valeur par défaut)
-- Limiter les overrides aux clés très volatiles (events, leases…)
-- Ne pas externaliser des clés critiques comme `/registry/pods` ou `/registry/secrets`
+### Shared authentication
+
+The kube-apiserver uses the **same TLS client certificates** (`etcd-certfile` / `etcd-keyfile`) for all etcd clusters, including overrides. It is not possible to specify different certificates per cluster.
+
+In practice: both etcd clusters must be signed by the **same CA** and accept the same kube-apiserver client certificate.
+
+### Availability
+
+If the events-dedicated etcd becomes unavailable:
+
+- The kube-apiserver keeps attempting to write/read events
+- Timeouts and retries impact overall performance
+- The main etcd remains operational, but the API server is degraded
 
 ---
 
-## Autres clés candidates
+## Best practices
 
-Au-delà des events, d'autres préfixes peuvent être externalisés selon les cas d'usage :
+- Deploy the events etcd in high availability (minimum 3 nodes)
+- Monitor both etcd clusters separately
+- Tune event retention: `--event-ttl=1h` (default value)
+- Limit overrides to highly volatile keys (events, leases…)
+- Do not offload critical keys such as `/registry/pods` or `/registry/secrets`
 
-| Préfixe | Description |
+---
+
+## Other candidate keys
+
+Beyond events, other prefixes can be offloaded depending on the use case:
+
+| Prefix | Description |
 |---|---|
-| `/events` | Events Kubernetes (cas le plus courant) |
-| `/leases` | Leader election et node heartbeats |
-| `/pods` | Déconseillé — clé critique |
+| `/events` | Kubernetes events (most common case) |
+| `/leases` | Leader election and node heartbeats |
+| `/pods` | Not recommended — critical key |
 
 ---
 
 ## Conclusion
 
-Externaliser `/registry/events` dans un cluster etcd séparé est une optimisation efficace pour les gros clusters Kubernetes où les events deviennent un vrai bottleneck.
+Offloading `/registry/events` to a separate etcd cluster is an effective optimization for large Kubernetes clusters where events become a real bottleneck.
 
-Cela doit être mis en place avec précaution : l'etcd dédié doit être hautement disponible, et les deux clusters doivent partager la même PKI.
+This must be set up carefully: the dedicated etcd must be highly available, and both clusters must share the same PKI.
 
-> À utiliser principalement dans les environnements à très forte volumétrie, en production.
+> Primarily intended for very high-throughput production environments.
