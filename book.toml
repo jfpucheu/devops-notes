@@ -4,3 +4,6 @@ language = "en"
 multilingual = false
 src = "src"
 title = "Devops-Notes"
+
+[output.html]
+additional-css = ["src/custom.css"]
