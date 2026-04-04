@@ -66,30 +66,7 @@ The risk of false positives is higher — a 30-second network partition is enoug
 
 ## Eviction timeline — the three scenarios compared
 
-```mermaid
-gantt
-    title Pod eviction timeline after node failure (NotReady / Unreachable)
-    dateFormat  s
-    axisFormat  %Ss
-
-    section 🔴 Aggressive
-    Heartbeat window (last known)     : 0, 10s
-    grace-period (node-monitor)       : 10s, 20s
-    tolerationSeconds                 : 20s, 10s
-    💥 PODS EVICTED                   : milestone, 30s, 0s
-
-    section 🟡 Medium
-    Heartbeat window (last known)     : 0, 20s
-    grace-period (node-monitor)       : 20s, 120s
-    tolerationSeconds                 : 140s, 60s
-    💥 PODS EVICTED                   : milestone, 200s, 0s
-
-    section 🟢 Normal (default)
-    Heartbeat window (last known)     : 0, 10s
-    grace-period (node-monitor)       : 10s, 40s
-    tolerationSeconds                 : 50s, 300s
-    💥 PODS EVICTED                   : milestone, 350s, 0s
-```
+![Eviction timeline — Aggressive vs Medium vs Normal](img/eviction_timeline.svg)
 
 ---
 
