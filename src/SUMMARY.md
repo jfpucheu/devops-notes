@@ -8,6 +8,7 @@
 - [Kubernetes](kubernetes/README.md)
     - [Etcd](kubernetes/etcd.md)
     - [Tuning](kubernetes/kube-tuning.md)
+    - [Tuning Eviction](kubernetes/eviction.md)
     - [Kube-apiserver goaway parameter](kubernetes/goaway-chance-kubernetes.md)
     - [Multiple Etcd](kubernetes/etcd_split.md)
     - [Essential Kubectl Commands](kubernetes/kubectl_commands.md)
