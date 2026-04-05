@@ -10,7 +10,6 @@ That said, I do try to make it useful. When I take the time to write something p
 
 **Happy reading — and good luck hunting bugs.** 🐛
 
----
 
 <div style="text-align:center">
   <img src="img/me.png" alt="Jean-François Pucheu" style="width:120px;border-radius:50%;margin-bottom:12px"/>
