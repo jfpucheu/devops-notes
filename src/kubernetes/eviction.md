@@ -10,6 +10,8 @@ This article explains how the eviction pipeline works, what each knob does, and 
 
 ## How the eviction pipeline works
 
+One of the most common mistakes is tuning a single parameter and wondering why nothing changes. Eviction behavior is the **product of a combination of settings spread across three different components** — kubelet, kube-controller-manager, and kube-apiserver. Each one controls a different phase of the pipeline, and they must be tuned together or the result is unpredictable.
+
 Three components cooperate in sequence:
 
 | Component | Role |
@@ -23,6 +25,20 @@ The total eviction time is always:
 ```
 T_eviction = node-monitor-grace-period + tolerationSeconds
 ```
+
+### All parameters at a glance
+
+| Parameter | Component | Where to set | Effect on eviction |
+|---|---|---|---|
+| `nodeStatusUpdateFrequency` | kubelet | `KubeletConfiguration` | Frequency of heartbeats sent to the apiserver. Increasing it reduces API load but lengthens the detection window. |
+| `nodeStatusReportFrequency` | kubelet | `KubeletConfiguration` | Frequency of full node status reports (separate from heartbeats). Usually left at default (5min). |
+| `node-monitor-period` | kube-controller-manager | flag `--node-monitor-period` | How often the node lifecycle controller checks heartbeat freshness. Default: 5s. |
+| `node-monitor-grace-period` | kube-controller-manager | flag `--node-monitor-grace-period` | Time without heartbeat before node is marked `NotReady`/`Unknown`. **Must be ≥ 3× `nodeStatusUpdateFrequency`**. |
+| `default-not-ready-toleration-seconds` | kube-apiserver | flag `--default-not-ready-toleration-seconds` | Injected `tolerationSeconds` for `not-ready:NoExecute` on every new pod. |
+| `default-unreachable-toleration-seconds` | kube-apiserver | flag `--default-unreachable-toleration-seconds` | Injected `tolerationSeconds` for `unreachable:NoExecute` on every new pod. |
+| `terminated-pod-gc-threshold` | kube-controller-manager | flag `--terminated-pod-gc-threshold` | Number of terminated pods before garbage collection runs. Does not affect eviction timing. |
+| `shutdownGracePeriod` | kubelet | `KubeletConfiguration` | Grace period for graceful node shutdown. Separate from the eviction pipeline — only applies to planned shutdown. |
+| `tolerations` (per pod) | pod spec | manifest / admission webhook | Can override the apiserver-injected defaults per workload. Stateful pods should set longer values explicitly. |
 
 ### NotReady vs Unreachable — two different taints
 
