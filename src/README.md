@@ -10,7 +10,6 @@ That said, I do try to make it useful. When I take the time to write something p
 
 **Happy reading — and good luck hunting bugs.** 🐛
 
----
 
 <div style="text-align:center">
   <img src="img/me.png" alt="Jean-François Pucheu" style="width:120px;border-radius:50%;margin-bottom:12px"/>
@@ -20,4 +19,5 @@ That said, I do try to make it useful. When I take the time to write something p
 
 - 🐙 [github.com/jfpucheu](https://github.com/jfpucheu/)
 - 💼 [linkedin.com/in/jfpucheu](https://www.linkedin.com/in/jfpucheu/)
+- ✍️ [medium.com/@jfpucheu](https://medium.com/@jfpucheu)
 - 📧 [jfpucheu@gmail.com](mailto:jfpucheu@gmail.com)
