@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://devops-notes.com/sitemap.xml
