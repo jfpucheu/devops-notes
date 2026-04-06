@@ -37,6 +37,20 @@ jobs:
       - name: Build with mdBook
         run: ./mdbook build
 
+      - name: Generate sitemap
+        run: |
+          SITE_URL="https://devops-notes.com"
+          OUTPUT="./book/sitemap.xml"
+          echo '<?xml version="1.0" encoding="UTF-8"?>' > $OUTPUT
+          echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' >> $OUTPUT
+          find ./book -name "*.html" ! -name "404.html" | while read f; do
+            path="${f#./book}"
+            echo "  <url><loc>${SITE_URL}${path}</loc></url>" >> $OUTPUT
+          done
+          echo '</urlset>' >> $OUTPUT
+          echo "Sitemap generated:"
+          cat $OUTPUT
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

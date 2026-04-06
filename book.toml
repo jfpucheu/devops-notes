@@ -7,3 +7,9 @@ title = "Devops-Notes"
 
 [output.html]
 additional-css = ["src/custom.css"]
+additional-js  = ["src/seo.js"]
+site-url       = "https://devops-notes.com/"
+git-repository-url = "https://github.com/jfpucheu/devops-notes"
+
+[output.html.additional-files]
+robots = "src/robots.txt"
