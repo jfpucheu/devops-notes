@@ -25,6 +25,9 @@ jobs:
       MDBOOK_VERSION: 0.4.44
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed for git log dates
+
       - name: Install mdBook
         run: |
           wget https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz
@@ -41,15 +44,39 @@ jobs:
         run: |
           SITE_URL="https://devops-notes.com"
           OUTPUT="./book/sitemap.xml"
-          echo '<?xml version="1.0" encoding="UTF-8"?>' > $OUTPUT
-          echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' >> $OUTPUT
-          find ./book -name "*.html" ! -name "404.html" | while read f; do
-            path="${f#./book}"
-            echo "  <url><loc>${SITE_URL}${path}</loc></url>" >> $OUTPUT
+          TODAY=$(date -u +%Y-%m-%d)
+
+          echo '<?xml version="1.0" encoding="UTF-8"?>'                              > $OUTPUT
+          echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'        >> $OUTPUT
+
+          find ./book -name "*.html" ! -name "404.html" | sort | while read f; do
+            html_path="${f#./book}"
+
+            # Clean URL: /foo/index.html → /foo/
+            clean="${html_path/\/index.html//}"
+
+            # Priority: root = 1.0, section index = 0.8, leaf page = 0.6
+            if   [ "$clean" = "/" ];               then PRI="1.0"; FREQ="monthly"
+            elif echo "$clean" | grep -q "/$";     then PRI="0.8"; FREQ="monthly"
+            else                                        PRI="0.6"; FREQ="monthly"
+            fi
+
+            # lastmod from git history of the source .md file
+            # map html path → src markdown path
+            md_path=$(echo "$html_path" | sed 's|^/||; s|\.html$|.md|; s|index\.md$|README.md|')
+            LASTMOD=$(git log -1 --format="%ai" -- "src/${md_path}" 2>/dev/null | cut -c1-10)
+            [ -z "$LASTMOD" ] && LASTMOD=$TODAY
+
+            echo "  <url>"                                                            >> $OUTPUT
+            echo "    <loc>${SITE_URL}${clean}</loc>"                                >> $OUTPUT
+            echo "    <lastmod>${LASTMOD}</lastmod>"                                 >> $OUTPUT
+            echo "    <changefreq>${FREQ}</changefreq>"                              >> $OUTPUT
+            echo "    <priority>${PRI}</priority>"                                   >> $OUTPUT
+            echo "  </url>"                                                           >> $OUTPUT
           done
+
           echo '</urlset>' >> $OUTPUT
-          echo "Sitemap generated:"
-          cat $OUTPUT
+          echo "Sitemap generated:" && cat $OUTPUT
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
