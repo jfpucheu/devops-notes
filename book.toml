@@ -1,9 +1,10 @@
 [book]
-authors = ["jfpucheu@gmail.com"]
+authors = ["Jean-François Pucheu"]
 language = "en"
 multilingual = false
 src = "src"
 title = "Devops-Notes"
+description = "Personal DevOps and Kubernetes field notes — Kubernetes, etcd, Cluster API, Kind, and more."
 
 [output.html]
 additional-css = ["src/custom.css"]
