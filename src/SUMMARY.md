@@ -27,3 +27,5 @@
     - [Essential Git Commands](other/git_commands.md)
     - [Benchmark Tools](other/bench.md)
     - [Synology](other/synology.md)
+    - [NUMA & NIC Placement on Dual-Socket Servers](other/numa-nic-bisocket-en.md)
+        - [Version Française](other/numa-nic-bisocket-fr.md)
