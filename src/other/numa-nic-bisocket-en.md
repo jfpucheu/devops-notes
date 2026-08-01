@@ -84,6 +84,8 @@ taskset -cp <PID>
 
 `taskset` lets you inspect (and, with the right arguments, modify) the CPU affinity of a running process. Combined with `Cpus_allowed_list` above, it lets you verify — or enforce — that a process stays confined to the cores of the NUMA node where its NIC lives.
 
+📎 [Mindmap of NUMA, NIC and CPU affinity concepts](img/mindmap_CPU.png)
+
 ### Multiqueue: Your NIC Can Multitask Too
 
 On many Linux distributions, multiqueue is not necessarily active or properly sized out of the box. It's worth checking and, if needed, enabling or tuning it — especially on fast interfaces (10 Gbit/s and above) where a single core can quickly become the bottleneck.

@@ -84,6 +84,8 @@ taskset -cp <PID>
 
 `taskset` permet de consulter (et, avec les bons arguments, de modifier) l'affinité CPU d'un processus en cours d'exécution. Combinée à la commande précédente sur `Cpus_allowed_list`, elle permet de vérifier — ou de forcer — qu'un processus reste cantonné aux cœurs du nœud NUMA où se trouve sa carte réseau.
 
+📎 [Mindmap des concepts NUMA, carte réseau et affinité CPU](img/mindmap_CPU.png)
+
 ### Multiqueue : la carte réseau aussi peut faire du multitâche
 
 Par défaut, sur de nombreuses distributions Linux, le multiqueue n'est pas forcément actif ou correctement dimensionné à l'installation. Il est donc important de le vérifier et, le cas échéant, de l'activer ou de l'ajuster — surtout sur des interfaces rapides (10 Gbit/s et au-delà) où un seul cœur peut rapidement devenir le goulot d'étranglement.
