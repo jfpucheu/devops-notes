@@ -18,6 +18,8 @@ The two processors talk to each other through a dedicated interconnect: QPI or U
 
 This is the **NUMA** principle (*Non-Uniform Memory Access*): depending on where a piece of data lives, accessing it is either fast (local memory) or slower (memory on the other socket).
 
+Strictly speaking, NUMA is a memory problem: a core on CPU 0 reaches its own local RAM quickly, but every access to CPU 1's RAM has to cross that interconnect, and an application poorly placed relative to its memory pays that cost on every single access. The network card story told in this article is a related but distinct problem — it's not about memory access, but about locality on the PCIe bus. Both share the same root cause, the costly inter-socket link, which is why people commonly lump them together under the "NUMA" label even though the term strictly refers to memory. In practice the two frequently compound: a process badly placed relative to its NIC is often also badly placed relative to its memory.
+
 ## The Diagram That Changes Everything
 
 ```

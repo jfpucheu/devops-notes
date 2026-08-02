@@ -18,6 +18,8 @@ Les deux processeurs se parlent via un lien dédié : QPI ou UPI chez Intel, Inf
 
 C'est le principe **NUMA** (*Non-Uniform Memory Access*) : selon l'endroit où se trouve la donnée, y accéder est rapide (mémoire locale) ou plus lent (mémoire de l'autre socket).
 
+À proprement parler, NUMA est un problème de mémoire : un cœur du CPU 0 accède vite à sa propre RAM locale, mais chaque accès à la RAM du CPU 1 doit traverser ce lien inter-socket, et une application mal placée par rapport à sa mémoire paie ce coût à chaque accès. Le sujet des cartes réseau traité dans cet article est un problème connexe mais distinct — ce n'est pas l'accès mémoire qui pose problème, mais la localité sur le bus PCIe. Les deux partagent la même cause racine, ce lien inter-socket coûteux, ce qui explique qu'on les regroupe souvent sous l'étiquette "NUMA" alors que le terme ne désigne à l'origine que la mémoire. En pratique, les deux se cumulent souvent : un processus mal placé par rapport à sa carte réseau l'est fréquemment aussi par rapport à sa mémoire.
+
 ## Le schéma qui change tout
 
 ```
