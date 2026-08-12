@@ -1,7 +1,6 @@
 [book]
 authors = ["Jean-François Pucheu"]
 language = "en"
-multilingual = false
 src = "src"
 title = "Devops-Notes"
 description = "Personal DevOps and Kubernetes field notes — Kubernetes, etcd, Cluster API, Kind, and more."
@@ -11,6 +10,3 @@ additional-css = ["src/custom.css"]
 additional-js  = ["src/seo.js"]
 site-url       = "https://devops-notes.com/"
 git-repository-url = "https://github.com/jfpucheu/devops-notes"
-
-[output.html.additional-files]
-robots = "src/robots.txt"
