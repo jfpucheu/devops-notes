@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /print.html
+Disallow: /toc.html
 
 Sitemap: https://devops-notes.com/sitemap.xml

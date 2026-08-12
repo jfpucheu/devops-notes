@@ -49,7 +49,7 @@ jobs:
           echo '<?xml version="1.0" encoding="UTF-8"?>'                              > $OUTPUT
           echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'        >> $OUTPUT
 
-          find ./book -name "*.html" ! -name "404.html" | sort | while read f; do
+          find ./book -name "*.html" ! -name "404.html" ! -name "print.html" ! -name "toc.html" | sort | while read f; do
             html_path="${f#./book}"
 
             # Clean URL: /foo/index.html → /foo/
